@@ -24,7 +24,8 @@ pageInit.profile = () => {
 		
 		document.$watch("body", body => body.classList.add("btr-profile"))
 		
-		document.$watch("#content").$then().$watch(">.profile-container", profileContainer => {
+		// Try multiple selectors for the profile container to handle new structure
+		document.$watch("#content").$then().$watch(">.profile-container, .profile-container, #container-main", profileContainer => {
 			const newCont = html`
 			<div class=btr-profile-container>
 				<div class=btr-profile-left>
@@ -105,9 +106,12 @@ pageInit.profile = () => {
 			const presencePromise = new Promise(resolve => resolve(RobloxApi.presence.getPresence([userId]).then(json => json?.userPresences?.[0])))
 			
 			profileContainer
-				.$watch(".profile-header-top .avatar-status", statusContainer => {
+				.$watch(".profile-header-top .avatar-status, .profile-header .avatar-status", statusContainer => {
 					const statusDiv = html`<div class="btr-header-status-parent"></div>`
-					newCont.$find(".placeholder-status").replaceWith(statusDiv)
+					const statusPlaceholder = newCont.$find(".placeholder-status")
+					if(statusPlaceholder) {
+						statusPlaceholder.replaceWith(statusDiv)
+					}
 					
 					presencePromise.then(presence => {
 						if(presence?.userPresenceType === 3) { // studio
@@ -132,12 +136,22 @@ pageInit.profile = () => {
 						}
 					})
 				})
-				.$watch(".rbx-tabs-horizontal", cont => {
-					cont.before(newCont)
-					cont.setAttribute("ng-if", "false") // Let's make angular clean it up :)
+				.$watch(".rbx-tabs-horizontal, .tab-content", cont => {
+					// Handle both old and new tab structures
+					if(cont.classList.contains("rbx-tabs-horizontal")) {
+						cont.before(newCont)
+						cont.setAttribute("ng-if", "false") // Let's make angular clean it up :)
+					} else if(cont.classList.contains("tab-content")) {
+						// New structure - insert before tab content
+						cont.before(newCont)
+						cont.style.display = "none"
+					}
 				})
-				.$watch(".profile-about", about => {
-					newCont.$find(".profile-about").setAttribute("ng-controller", about.getAttribute("ng-controller"))
+				.$watch(".profile-about, .section.profile-about", about => {
+					const ngController = about.getAttribute("ng-controller")
+					if(ngController) {
+						newCont.$find(".profile-about").setAttribute("ng-controller", ngController)
+					}
 
 					about
 						.$watch("profile-description,.profile-about-content", desc => {
@@ -146,17 +160,26 @@ pageInit.profile = () => {
 								desc = desc.closest("profile-description")
 							}
 
-							newCont.$find(".placeholder-desc").replaceWith(desc)
+							const descPlaceholder = newCont.$find(".placeholder-desc")
+							if(descPlaceholder) {
+								descPlaceholder.replaceWith(desc)
+							}
 
 							if(desc.matches("profile-description")) {
 								newCont.$find(".btr-profile-about > .container-header").style.visibility = "hidden"
 							}
 						})
 						.$watch("#aliases-container", aliases => {
-							newCont.$find(".placeholder-aliases").replaceWith(aliases)
+							const aliasesPlaceholder = newCont.$find(".placeholder-aliases")
+							if(aliasesPlaceholder) {
+								aliasesPlaceholder.replaceWith(aliases)
+							}
 						})
 						.$watch(".profile-about-footer", footer => {
-							newCont.$find(".placeholder-footer").replaceWith(footer)
+							const footerPlaceholder = newCont.$find(".placeholder-footer")
+							if(footerPlaceholder) {
+								footerPlaceholder.replaceWith(footer)
+							}
 				
 							const tooltip = footer.$find(".tooltip-pastnames")
 							if(tooltip) { tooltip.setAttribute("data-container", "body") } // Display tooltip over side panel
@@ -165,65 +188,100 @@ pageInit.profile = () => {
 							newCont.$find(".btr-profile-about").prepend(social)
 						})
 				})
-				.$watch(".profile-avatar", async avatar => {
-					newCont.$find(".placeholder-avatar").replaceWith(avatar)
-					
-					await avatar.$watch(">.container-header").$promise()
-					
-					avatar.$find(".container-header").remove()
-
-					const avatarLeft = avatar.$find(".profile-avatar-left")
-					const avatarRight = avatar.$find(".profile-avatar-right")
-
-					avatar.classList.remove("section")
-					avatarLeft.classList.remove("col-sm-6", "section-content")
-					avatarRight.classList.remove("col-sm-6")
-
-					avatarRight.style.transition = "none" // stop transition on page load
-					setTimeout(() => avatarRight.style.transition = "", 1e3)
-
-					const toggleItems = html`<span class="btr-toggle-items btn-control btn-control-sm">Show Items</span>`
-					avatarLeft.$find(".thumbnail-holder").append(toggleItems)
-					
-					//
-					
-					let visible = false
-					
-					const setVisible = bool => {
-						visible = bool
-						avatarRight.classList.toggle("visible", visible)
-						toggleItems.textContent = visible ? "Hide Items" : "Show Items"
+				.$watch(".profile-avatar, .profile-current-wearing-avatar, #profile-current-wearing-avatar", async avatar => {
+					const avatarPlaceholder = newCont.$find(".placeholder-avatar")
+					if(avatarPlaceholder) {
+						avatarPlaceholder.replaceWith(avatar)
 					}
 					
-					toggleItems.$on("click", ev => {
-						setVisible(!visible)
-						ev.stopPropagation()
-						ev.stopImmediatePropagation()
-						ev.preventDefault()
-					})
+					// Handle both old and new avatar structures
+					const headerElement = avatar.$find(">.container-header")
+					if(headerElement) {
+						headerElement.remove()
+					}
+
+					let avatarLeft = avatar.$find(".profile-avatar-left")
+					let avatarRight = avatar.$find(".profile-avatar-right")
 					
-					document.$on("click", ev => {
-						if(visible && !avatarRight.contains(ev.target)) {
-							setVisible(false)
+					// Fallback for new structure
+					if(!avatarLeft) {
+						avatarLeft = avatar.$find(".section-content") || avatar
+					}
+					if(!avatarRight) {
+						avatarRight = avatar.$find(".profile-avatar-right") || html`<div class="profile-avatar-right"></div>`
+						if(!avatar.contains(avatarRight)) {
+							avatar.append(avatarRight)
 						}
-					})
+					}
+
+					avatar.classList.remove("section")
+					if(avatarLeft) {
+						avatarLeft.classList.remove("col-sm-6", "section-content")
+					}
+					if(avatarRight) {
+						avatarRight.classList.remove("col-sm-6")
+						avatarRight.style.transition = "none" // stop transition on page load
+						setTimeout(() => avatarRight.style.transition = "", 1e3)
+					}
+
+					const thumbnailHolder = avatarLeft?.$find(".thumbnail-holder") || avatarLeft?.$find(".avatar-container") || avatarLeft
+					if(thumbnailHolder) {
+						const toggleItems = html`<span class="btr-toggle-items btn-control btn-control-sm">Show Items</span>`
+						thumbnailHolder.append(toggleItems)
+						
+						//
+						
+						let visible = false
+						
+						const setVisible = bool => {
+							visible = bool
+							avatarRight.classList.toggle("visible", visible)
+							toggleItems.textContent = visible ? "Hide Items" : "Show Items"
+						}
+						
+						toggleItems.$on("click", ev => {
+							setVisible(!visible)
+							ev.stopPropagation()
+							ev.stopImmediatePropagation()
+							ev.preventDefault()
+						})
+						
+						document.$on("click", ev => {
+							if(visible && !avatarRight.contains(ev.target)) {
+								setVisible(false)
+							}
+						})
+					}
 				})
 				.$watch(".profile-posts", posts => {
-					newCont.$find(".placeholder-posts").replaceWith(posts)
+					const postsPlaceholder = newCont.$find(".placeholder-posts")
+					if(postsPlaceholder) {
+						postsPlaceholder.replaceWith(posts)
+					}
 				})
-				.$watch("#friends-carousel-container", friends => {
-					newCont.$find(".placeholder-friends").after(friends)
-					
-					friends.$watch(".friends-carousel-container", () => {
-						newCont.$find(".placeholder-friends").remove()
-					})
+				.$watch("#friends-carousel-container, .friends-carousel-container, [data-testid='friends-carousel']", friends => {
+					const friendsPlaceholder = newCont.$find(".placeholder-friends")
+					if(friendsPlaceholder) {
+						friendsPlaceholder.after(friends)
+						
+						const friendsCarousel = friends.$find(".friends-carousel-container") || friends
+						if(friendsCarousel) {
+							friendsPlaceholder.remove()
+						}
+					}
 				})
-				.$watch(".profile-statistics", outerStats => {
-					newCont.$find(".placeholder-stats").replaceWith(outerStats)
+				.$watch(".profile-statistics, #profile-statistics-container", outerStats => {
+					const statsPlaceholder = newCont.$find(".placeholder-stats")
+					if(statsPlaceholder) {
+						statsPlaceholder.replaceWith(outerStats)
+					}
 					outerStats.classList.add("btr-profileStats")
 				})
 				.$watch("#roblox-badges-container", badges => {
-					newCont.$find(".placeholder-robloxbadges").replaceWith(badges)
+					const badgesPlaceholder = newCont.$find(".placeholder-robloxbadges")
+					if(badgesPlaceholder) {
+						badgesPlaceholder.replaceWith(badges)
+					}
 
 					badges.$watch(">.section-content", content => {
 						content.classList.remove("remove-panel")
@@ -231,7 +289,10 @@ pageInit.profile = () => {
 				})
 				.$watch("#games-switcher", switcher => {
 					const games = switcher.parentNode
-					newCont.$find(".placeholder-games").replaceWith(games)
+					const gamesPlaceholder = newCont.$find(".placeholder-games")
+					if(gamesPlaceholder) {
+						gamesPlaceholder.replaceWith(games)
+					}
 
 					games.classList.add("section")
 
@@ -530,7 +591,10 @@ pageInit.profile = () => {
 				.$watch(".favorite-games-container", favorites => favorites.remove())
 				.$watch(".profile-collections", collections => {
 					collections.classList.remove("layer", "gray-layer-on")
-					newCont.$find(".placeholder-collections").replaceWith(collections)
+					const collectionsPlaceholder = newCont.$find(".placeholder-collections")
+					if(collectionsPlaceholder) {
+						collectionsPlaceholder.replaceWith(collections)
+					}
 				})
 			
 			function initPlayerBadges() {
@@ -942,8 +1006,231 @@ pageInit.profile = () => {
 			}
 
 			$.ready(() => {
+				// Clean up old containers
 				const oldContainer = profileContainer.$find(">.rbx-tabs-horizontal")
 				if(oldContainer) { oldContainer.remove() }
+				
+				const oldTabContent = profileContainer.$find(">.tab-content")
+				if(oldTabContent) { oldTabContent.remove() }
+
+				if(SETTINGS.get("profile.embedInventoryEnabled") && userId !== 1) {
+					const cont = html`<div></div>`
+					const iframe = html`<iframe id="btr-injected-inventory" src="/users/${userId}/inventory" scrolling="no">`
+
+					cont.append(iframe)
+					const inventoryPlaceholder = newCont.$find(".placeholder-inventory")
+					if(inventoryPlaceholder) {
+						inventoryPlaceholder.replaceWith(cont)
+					}
+				} else {
+					const inventoryPlaceholder = newCont.$find(".placeholder-inventory")
+					if(inventoryPlaceholder) {
+						inventoryPlaceholder.remove()
+					}
+				}
+				
+				// Check for friends container with multiple selectors
+				if(!$("#friends-carousel-container") && !$(".friends-carousel-container") && !$("[data-testid='friends-carousel']")) {
+					const friendsPlaceholder = newCont.$find(".placeholder-friends")
+					if(friendsPlaceholder) {
+						friendsPlaceholder.remove()
+					}
+				}
+			})
+		})
+	})
+}category, page) => {
+					if(isLoading) { return }
+					lastCategory = category
+					
+					let data = favoriteData[category]
+					
+					if(!data) {
+						data = {
+							items: [],
+							nextPage: 1,
+							nextPageCursor: "",
+							hasMore: true
+						}
+						
+						favoriteData[category] = data
+					}
+					
+					const pageStart = (page - 1) * pageSize
+					const pageEnd = pageStart + pageSize
+					
+					while(data.hasMore && pageEnd > data.items.length) {
+						isLoading = true
+						
+						const CreatorStoreAssetTypes = [
+							AssetType.Audio, AssetType.Model, AssetType.Decal, AssetType.Animation,
+							AssetType.Plugin, AssetType.MeshPart, AssetType.Video
+						]
+						
+						let json
+						
+						if(category === AssetType.Place) {
+							json = await RobloxApi.games.getFavorites(userId, 100, data.nextPageCursor)
+								.then(json => {
+									json.data = json.data.map(x => ({
+										url: `/games/${x.rootPlace?.id}/`,
+										id: x.rootPlace?.id,
+										gameId: x.id,
+										assetTypeId: category,
+										name: x.name,
+										creator: {
+											id: x.creator.id,
+											type: x.creator.type,
+											name: x.creator.name,
+											verified: false
+										}
+									}))
+									
+									return json
+								})
+						} else if(CreatorStoreAssetTypes.includes(category)) {
+							json = await RobloxApi.toolboxService.getFavorites(userId, category, 100, data.nextPageCursor)
+								.then(json => {
+									json.data = json.data.map(x => ({
+										url: `https://create.roblox.com/store/asset/${x.asset.id}/`,
+										id: x.asset.id,
+										assetTypeId: x.asset.assetTypeId,
+										name: x.asset.name,
+										creator: {
+											id: x.creator.creator.match(/\/(\d+)/)?.[1],
+											type: x.creator.creator.includes("user/") ? "User" : "Group",
+											name: x.creator.name,
+											verified: x.creator.verified
+										}
+									}))
+									
+									return json
+								})
+						} else {
+							json = await RobloxApi.catalog.getFavorites(userId, category, 100, data.nextPageCursor)
+								.then(json => {
+									json.data = json.data.map(x => ({
+										url: `/catalog/${x.id}/`,
+										id: x.id,
+										assetTypeId: x.assetType,
+										name: x.name,
+										creator: {
+											id: x.creatorTargetId,
+											type: x.creatorType, 
+											name: x.creatorName,
+											verified: x.creatorHasVerifiedBadge
+										}
+									}))
+									
+									return json
+								})
+						}
+						
+						isLoading = false
+						
+						if(!json?.data) {
+							return
+						}
+						
+						data.items.push(...json.data)
+						
+						data.nextPage += 1
+						data.nextPageCursor = json.nextPageCursor
+						
+						data.hasMore = !!data.nextPageCursor
+						data.totalItems = data.hasMore ? data.items.length + 1 : data.items.length
+					}
+					
+					pager.setPage(page)
+					pager.setMaxPage(Math.floor((data.totalItems - 1) / pageSize) + 1)
+					hlist.replaceChildren()
+					
+					if(pageStart >= data.items.length) {
+						const categoryName = dropdownLabel.textContent
+						hlist.append(html`<div class='section-content-off btr-section-content-off'>This user has no favorite ${categoryName}</div>`)
+						return
+					}
+					
+					const requests = []
+					const cards = []
+					
+					for(let i = pageStart; i < pageEnd; i++) {
+						const item = data.items[i]
+						if(!item) { break }
+						
+						const card = html`
+						<li class="list-item game-card">
+							<div class="card-item game-card-container">
+								<a href="${item.url}" title="${item.name}">
+									<div class="game-card-thumb-container">
+										<img class="game-card-thumb card-thumb" src="">
+									</div>
+									<div class="text-overflow game-card-name" title="${item.name}" ng-non-bindable>${item.name}</div>
+								</a>
+								<div class="game-card-name-secondary btr-creator-link-container">
+									<span class="text-secondary">By </span>
+									<a class="text-link text-overflow btr-creator-link" title="${item.creator.name}" href="${item.creator.type === "User" ? `/users/${item.creator.id}/profile` : `/communities/${item.creator.id}/community`}">
+										${item.creator.name}
+									</a>
+								</div>
+							</div>
+						</li>`
+						
+						requests.push({
+							format: "webp",
+							requestId: `${i}`,
+							size: "150x150",
+							targetId: category === AssetType.Place ? item.gameId : item.id,
+							type: category === AssetType.Place ? "GameIcon" : "Asset"
+						})
+						cards.push(card)
+						
+						hlist.append(card)
+					}
+					
+					if(requests.length) {
+						RobloxApi.thumbnails.batch(requests).then(json => {
+							for(const thumb of json.data) {
+								const index = requests.findIndex(x => x.targetId === thumb.targetId)
+								cards[index].$find(".game-card-thumb").src = thumb.imageUrl ?? ""
+							}
+						})
+					}
+				}
+
+				const onclick = ev => {
+					const cat = +ev.currentTarget.getAttribute("data-value")
+					if(Number.isSafeInteger(cat)) {
+						loadPage(cat, 1)
+					}
+				}
+				
+				for(const btn of dropdown.$findAll(".dropdown-menu li")) {
+					btn.$on("click", onclick)
+				}
+
+				pager.onsetpage = page => loadPage(lastCategory, page)
+				$.ready(() => loadPage(9, 1))
+			}
+
+			initGroups()
+			initFavorites()
+
+			if(userId !== 1) {
+				initPlayerBadges()
+			} else {
+				newCont.$find(".btr-profile-playerbadges").remove()
+				const friends = newCont.$find(".placeholder-friends")
+				if(friends) { friends.remove() }
+			}
+
+			$.ready(() => {
+				// Clean up old containers
+				const oldContainer = profileContainer.$find(">.rbx-tabs-horizontal")
+				if(oldContainer) { oldContainer.remove() }
+				
+				const oldTabContent = profileContainer.$find(">.tab-content")
+				if(oldTabContent) { oldTabContent.remove() }
 
 				if(SETTINGS.get("profile.embedInventoryEnabled") && userId !== 1) {
 					const cont = html`<div></div>`
@@ -955,7 +1242,8 @@ pageInit.profile = () => {
 					newCont.$find(".placeholder-inventory").remove()
 				}
 				
-				if(!$("#friends-carousel-container")) {
+				// Check for friends container with multiple selectors
+				if(!$("#friends-carousel-container") && !$(".friends-carousel-container") && !$("[data-testid='friends-carousel']")) {
 					newCont.$find(".placeholder-friends")?.remove()
 				}
 			})

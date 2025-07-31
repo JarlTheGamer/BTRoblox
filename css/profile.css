@@ -9,6 +9,105 @@
 	max-width: none;
 }
 
+/* Handle new profile structure */
+.btr-profile .container-main {
+	max-width: none;
+	width: 1072px;
+}
+
+.btr-profile #container-main {
+	max-width: none;
+	width: 1072px;
+}
+
+/* New profile avatar container */
+.btr-profile .profile-current-wearing-avatar,
+.btr-profile #profile-current-wearing-avatar {
+	position: relative;
+}
+
+/* New profile statistics container */
+.btr-profile #profile-statistics-container {
+	display: contents !important;
+}
+
+.btr-profile #profile-statistics-container>.container-header {
+	display: none !important;
+}
+
+/* Handle new tab structure */
+.btr-profile .nav-tabs {
+	display: none !important;
+}
+
+.btr-profile .tab-pane {
+	display: none !important;
+}
+
+/* Ensure profile container is visible */
+.btr-profile .btr-profile-container {
+	display: block !important;
+	visibility: visible !important;
+}
+
+/* Handle new profile header structure */
+.btr-profile .profile-header {
+	position: relative;
+}
+
+/* Improve compatibility with new avatar structure */
+.btr-profile .profile-current-wearing-avatar .section-content,
+.btr-profile #profile-current-wearing-avatar .section-content {
+	position: relative;
+}
+
+/* Handle missing elements gracefully */
+.btr-profile .profile-avatar-left {
+	width: 100%;
+	background: transparent !important;
+}
+
+.btr-profile .profile-avatar-right {
+	position: absolute;
+	width: 100%;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.3s;
+	z-index: 10000;
+	box-shadow: 0 0 8px 0 rgba(0, 0, 0, .1);
+}
+
+.btr-profile .profile-avatar-right.visible {
+	opacity: 1;
+	pointer-events: initial;
+	transition: opacity 0.3s;
+}
+
+/* Ensure BTR profile container is properly displayed */
+.btr-profile .btr-profile-container {
+	display: block;
+	width: 100%;
+}
+
+/* Handle new profile structure gracefully */
+.btr-profile .profile-current-wearing-avatar .btr-toggle-items,
+.btr-profile #profile-current-wearing-avatar .btr-toggle-items {
+	position: absolute;
+	right: 12px;
+	bottom: 12px;
+}
+
+/* Fix for new avatar container structure */
+.btr-profile .avatar-container {
+	position: relative;
+}
+
+/* Ensure proper spacing and layout */
+.btr-profile .btr-profile-left,
+.btr-profile .btr-profile-right {
+	box-sizing: border-box;
+}
+
 .btr-profile .btr-profile-left,
 .btr-profile .btr-profile-right {
 	display: inline-block;
@@ -28,7 +127,8 @@
 	min-height: 32px;
 }
 
-.btr-profile .rbx-tabs-horizontal {
+.btr-profile .rbx-tabs-horizontal,
+.btr-profile .tab-content {
 	display: none !important;
 }
 
@@ -61,21 +161,21 @@ html .dark-theme.btr-profile .btr-section-content-off {
 /* Player status */
 
 .btr-profile .btr-header-status-parent {
-	display:block;
-	clear:both;
-	max-width:100%;
-	text-align:center;
-	padding:6px 0;
+	display: block;
+	clear: both;
+	max-width: 100%;
+	text-align: center;
+	padding: 6px 0;
 }
 
 .btr-profile .btr-header-status-text {
-	font-weight:400;
-	white-space:nowrap;
-	display:inline-block;
+	font-weight: 400;
+	white-space: nowrap;
+	display: inline-block;
 }
 
 .btr-profile .btr-header-status-text span {
-	display:inline-block;
+	display: inline-block;
 }
 
 .btr-profile .btr-header-status-text:before {
@@ -91,26 +191,26 @@ html .dark-theme.btr-profile .btr-section-content-off {
 .btr-profile .btr-header-status-follow-button {
 	margin-left: 4px;
 	padding: 2px;
-	color: rgb(2,143,47);
+	color: rgb(2, 143, 47);
 	font-size: 14px;
 	vertical-align: middle;
 }
 
 
 .btr-profile .btr-status-offline {
-	color:gray;
+	color: gray;
 }
 
 .btr-profile .btr-status-ingame {
-	color:rgb(2,143,47);
+	color: rgb(2, 143, 47);
 }
 
 .btr-profile .btr-status-studio {
-	color:rgb(246,136,2);
+	color: rgb(246, 136, 2);
 }
 
 .btr-profile .btr-status-online {
-	color:rgb(0,162,255);
+	color: rgb(0, 162, 255);
 }
 
 /* Avatar */
@@ -138,7 +238,7 @@ html .dark-theme.btr-profile .btr-section-content-off {
 	pointer-events: none;
 	transition: opacity 0.3s;
 	z-index: 10000;
-	
+
 	box-shadow: 0 0 8px 0 rgba(0, 0, 0, .1);
 }
 
@@ -158,13 +258,13 @@ html .dark-theme.btr-profile .btr-section-content-off {
 	position: relative;
 }
 
-.btr-profile-about > .section-content {
+.btr-profile-about>.section-content {
 	padding-bottom: 8px;
 }
 
 .btr-profile profile-description,
-.btr-profile profile-description > .profile-about,
-.btr-profile profile-description > .profile-about > .section-content,
+.btr-profile profile-description>.profile-about,
+.btr-profile profile-description>.profile-about>.section-content,
 .btr-profile profile-description profile-description-view {
 	display: contents;
 }
@@ -177,7 +277,8 @@ html .dark-theme.btr-profile .btr-section-content-off {
 }
 
 .btr-profile .profile-about-content {
-	text-align: right; /* Align Read More to right */
+	text-align: right;
+	/* Align Read More to right */
 }
 
 .btr-profile .profile-about-content .profile-about-text {
@@ -217,7 +318,7 @@ html .dark-theme.btr-profile .btr-section-content-off {
 	border-color: #E3E3E3;
 }
 
-.btr-profile #aliases-container .border-top > div:first-child {
+.btr-profile #aliases-container .border-top>div:first-child {
 	flex: 0 0 auto;
 	margin-right: 8px;
 }
@@ -233,11 +334,11 @@ html .dark-theme.btr-profile .btr-section-content-off {
 /* Stats */
 
 .btr-profile .profile-statistics,
-.btr-profile .profile-statistics > .section-content {
+.btr-profile .profile-statistics>.section-content {
 	display: contents !important;
 }
 
-.btr-profile .profile-statistics > .container-header {
+.btr-profile .profile-statistics>.container-header {
 	display: none !important;
 }
 
@@ -272,13 +373,13 @@ html .dark-theme.btr-profile .btr-section-content-off {
 	overflow-x: hidden;
 }
 
-.btr-profile #roblox-badges-container .badge-list > .list-item {
+.btr-profile #roblox-badges-container .badge-list>.list-item {
 	width: 20%;
 	text-align: center;
 	overflow: hidden;
 }
 
-.btr-profile #roblox-badges-container .badge-list > .list-item .asset-thumb-container {
+.btr-profile #roblox-badges-container .badge-list>.list-item .asset-thumb-container {
 	margin-left: 5px;
 	transform: scale(calc(90 / 140));
 	transform-origin: 0 0;
@@ -286,7 +387,7 @@ html .dark-theme.btr-profile .btr-section-content-off {
 	margin-bottom: -50px;
 }
 
-.btr-profile #roblox-badges-container .badge-list > .list-item .item-name {
+.btr-profile #roblox-badges-container .badge-list>.list-item .item-name {
 	width: 100%;
 	font-size: 14px;
 
@@ -399,7 +500,7 @@ html .dark-theme.btr-profile .btr-section-content-off {
 }
 
 .btr-profile .btr-games-list .btr-game-button:hover {
-	box-shadow: 0 1px 3px rgba(150,150,150,0.74);
+	box-shadow: 0 1px 3px rgba(150, 150, 150, 0.74);
 }
 
 .btr-profile .btr-games-list .btr-game-button .btr-game-title {
